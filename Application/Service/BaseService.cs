@@ -44,6 +44,16 @@ namespace Application.Service
             else
                 return false;
         }
+        protected bool renameFile(string oldFileName, string newFileName, string fileType)
+        {
+            if (File.Exists(oldFileName))
+            {
+                File.Move(oldFileName, newFileName + $".{fileType}");
+                return true;
+            }
+            else
+                return false;
+        }
 
     }
 }

@@ -116,7 +116,7 @@ namespace Application.Service
                 issuer: _configration["JWT:ValidIssuer"],
                 audience: _configration["JWT:ValidAudience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(1),
+                expires: DateTime.Now.AddHours(3),
                 signingCredentials: signingCredentials);
 
             return (true,"", myToken);

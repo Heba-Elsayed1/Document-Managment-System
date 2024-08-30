@@ -108,25 +108,20 @@ namespace WepApi.Controllers
 
         [Authorize(Roles = "User")]
         [HttpGet("download")]
-        public async Task<IActionResult> DownloadDocument (int documentId)
+        public async Task<IActionResult> DownloadDocument(int documentId)
         {
             int userId = GetUserId();
-            var document = await _documentService.GetDocumentToDownload(documentId, userId);
-            if(document == null)
-            {
-                return NotFound("Document Not Found");
-            }
-            var filePath = await _documentService.GetDocumentPath(documentId, userId);
-            if (!System.IO.File.Exists(filePath))
-            {
-                return NotFound("File Not Found");
-            }
-            var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
-            var mimiType =  _documentService.GetMimeType(document.Type);
+            var (isDownloaded, message, fileBytes, mimeType, documentName) = await _documentService.DownloadDocument(documentId, userId);
 
-            return File(fileBytes, mimiType, document.Name);
-
+            if (!isDownloaded)
+            {
+                return NotFound(message);
+            }
+               
+             return File(fileBytes, mimeType, documentName);
         }
+
+
         [Authorize(Roles = "User")]
         [HttpPut("update")]
         public async Task<IActionResult> UpdateDocument (int documentId ,string documentName)

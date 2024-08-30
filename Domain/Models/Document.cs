@@ -24,7 +24,7 @@ namespace Domain.Models
         [MaxLength(50)]
         public string Type { get; set; }
         public DateTime CreationDate { get; set; }
-        public bool IsPublic { get; set; } = false;
+        //public bool IsPublic { get; set; } = false;
         public bool IsDeleted { get; set; } = false;
         public Folder Folder { get; set; }
 

@@ -14,7 +14,6 @@ namespace Application.Dto
         public int Id { get; set; }
         public string Name { get; set; }
         public int FolderId { get; set; }
-        public bool IsPublic { get; set; } = false;
         public string Path { get; set; }
         public string Type { get; set; }
         public DateTime CreationDate { get; set; }

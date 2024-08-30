@@ -13,7 +13,7 @@ namespace Application.Interface
         Task<bool> DeleteDocument(int id,int userId);
         Task<bool> CreateDocument (DocumentUploadDto document,int userId);
         Task<DocumentDto> GetDocumentMetadata(int id,int userId);
-        Task<DocumentDto> GetDocumentToDownload(int id, int userId);
+        Task<(bool isDownloaded, string message, byte[] fileBytes, string mimiType, string documentName)> DownloadDocument(int id, int userId);
         Task<IEnumerable<DocumentDto>> GetDocumentsByFolder(int FolderId, int userId);
         Task<string> GetDocumentPath(int id, int userId);
         string GetMimeType(string fileExtension);

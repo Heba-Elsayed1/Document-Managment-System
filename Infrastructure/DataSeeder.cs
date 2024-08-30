@@ -105,7 +105,6 @@ namespace Infrastructure.Data
                     Path = "/documents/document1.pdf",
                     Type = "pdf",
                     CreationDate = DateTime.Now,
-                    IsPublic = true,
                     FolderId = folder1.Id
                 };
                 context.Documents.Add(document1);
@@ -116,7 +115,6 @@ namespace Infrastructure.Data
                     Path = "/documents/document2.docx",
                     Type = "docx",
                     CreationDate = DateTime.Now,
-                    IsPublic = false,
                     FolderId = folder2.Id
                 };
                 context.Documents.Add(document2);
