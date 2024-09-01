@@ -1,4 +1,5 @@
-﻿using Application.Dto;
+﻿using Application.Common;
+using Application.Dto;
 using Application.Interface;
 using AutoMapper;
 using Domain.Interface;
@@ -19,24 +20,33 @@ namespace Application.Service
             
 
         }
-        public async Task<bool> CreateFolder(FolderDto folderDto, int userId)
+        public async Task<Result> CreateFolder(string folderName, bool isPublic, int userId)
         {
+            if (string.IsNullOrEmpty(folderName))
+                return Result.Failure("Invalid empty name");
+
+            var folderDto = new FolderDto
+            {
+                Name = folderName,
+                IsPublic = isPublic
+            };
+
             if (folderDto == null)
             {
-                return false;
+                return Result.Failure("Invalid empty data");
 
             }
 
             var workspace = await _unitOfWork.WorkspaceRepository.GetWorkspaceByUser(userId);
             if (workspace == null)
             {
-                return false;
+                return Result.Failure("Workspace not found");
             }
 
             var existingFolder = await _unitOfWork.FolderRepository.GetFolderByWorkspace(workspace.Id, folderDto.Name);
             if (existingFolder != null)
             {
-                return false;
+                return Result.Failure("Folder not found");
             }
 
             string folderPath = GetFolderPath(workspace.Name, folderDto.Name);
@@ -50,77 +60,109 @@ namespace Application.Service
             newFolder.WorkspaceId = workspace.Id;
             newFolder.IsDeleted = false;
             await _unitOfWork.FolderRepository.Add(newFolder);
-            return _unitOfWork.Save() > 0;
+            var result = _unitOfWork.Save() > 0;
+            if (result)
+                return Result.Success();
+            else
+                return Result.Failure("Falied to create folder");
         }
 
-        public async Task<bool> DeleteFolder(int id, int userId)
+        public async Task<Result> DeleteFolder(int id, int userId)
         {
+            if (id < 0)
+                return Result.Failure("Invalid Id");
+
             var workspace = await _unitOfWork.WorkspaceRepository.GetWorkspaceByUser(userId);
             var folder = await _unitOfWork.FolderRepository.GetFolderByWorkspace(workspace.Id);
 
             if (folder != null )
                 _unitOfWork.FolderRepository.Delete(folder);
 
-            return _unitOfWork.Save() > 0 ? true : false;
+            var result = _unitOfWork.Save() > 0;
+            if (result)
+                return Result.Success();
+            else
+                return Result.Failure("Falied to delete folder");
         }
 
-        public async Task<IEnumerable<FolderDto>> GelAllFolders()
+        public async Task<GenericResult<IEnumerable<FolderDto>>> GelAllFolders()
         {
-
             var folders = await _unitOfWork.FolderRepository.GetAll();
-            return _mapper.Map<List<FolderDto>>(folders);
+            if (folders == null)
+                return GenericResult<IEnumerable<FolderDto>>.Failure("Folders not found");
 
+            var foldersDto = _mapper.Map<List<FolderDto>>(folders);
+            return GenericResult<IEnumerable<FolderDto>>.Success(foldersDto);
         }
 
-        public async Task<FolderDto> GetFolderById(int id, int userId)
+        public async Task<GenericResult<FolderDto>> GetFolderById(int id, int userId)
         {
-            var folder = await _unitOfWork.FolderRepository.GetFolderById(id, userId);
-            return _mapper.Map<FolderDto>(folder);
+            if (id < 0)
+                return GenericResult<FolderDto>.Failure("Invalid Id");
+
+            var folder = await _unitOfWork.FolderRepository.GetFolderById(id,userId);
+            if (folder == null)
+                return GenericResult<FolderDto>.Failure("Folder not found");
+
+            var folderDto = _mapper.Map<FolderDto>(folder);
+            return GenericResult<FolderDto>.Success(folderDto);
         }
 
-        public async Task<IEnumerable<FolderDto>> GetFoldersByWorkspace(int workspaceId, int userId)
+        public async Task<GenericResult<IEnumerable<FolderDto>>> GetFoldersByWorkspace(int workspaceId, int userId)
         {
-                var folders = await _unitOfWork.FolderRepository.GetFoldersByWorkspace(workspaceId,userId);
-                return _mapper.Map<List<FolderDto>>(folders);
+            if (workspaceId < 0)
+                return GenericResult<IEnumerable<FolderDto>>.Failure("Invalid Id");
+
+            var folders = await _unitOfWork.FolderRepository.GetFoldersByWorkspace(workspaceId,userId);
+            if (folders == null)
+                return GenericResult<IEnumerable<FolderDto>>.Failure("Folders not found");
+
+            var foldersDto = _mapper.Map<List<FolderDto>>(folders);
+            return GenericResult<IEnumerable<FolderDto>>.Success(foldersDto);
 
         }
 
-        public async Task<IEnumerable<FolderDto>> GetPublicFolders(int userId)
+        public async Task<GenericResult<IEnumerable<FolderDto>>> GetPublicFolders(int userId)
         {
             var folders = await _unitOfWork.FolderRepository.GetPublicFolders(userId);
-            return _mapper.Map<List<FolderDto>>(folders);
+            if (folders == null)
+                return GenericResult<IEnumerable<FolderDto>>.Failure("Folders not found");
+
+            var foldersDto = _mapper.Map<List<FolderDto>>(folders);
+            return GenericResult<IEnumerable<FolderDto>>.Success(foldersDto);
         }
 
-        public async Task<bool> UpdateFolder(FolderDto folderDto, int userId)
+        public async Task<Result> UpdateFolder(FolderDto folderDto, int userId)
         {
+            if (folderDto == null)
+              return Result.Failure("Invalid empty folder");
+
+            if(folderDto.Id < 0)
+             return Result.Failure("Invalid Id");
+
             var workspace = await _unitOfWork.WorkspaceRepository.GetWorkspaceByUser(userId);
             var folderUpdated = await _unitOfWork.FolderRepository.GetFolderByWorkspace(workspace.Id);
 
-            if (folderUpdated != null )
+            if (folderUpdated == null)
             {
-
-                string FolderOldPath = GetFolderPath(workspace.Name, folderUpdated.Name);
-                string FolderNewPath = GetFolderPath(workspace.Name, folderDto.Name);
-
-                if (! updatePhysicalFolder(FolderOldPath, FolderNewPath))
-                {
-                    return false;
-                }
-                _mapper.Map(folderDto, folderUpdated);
-                _unitOfWork.FolderRepository.Update(folderUpdated);
-                return _unitOfWork.Save() > 0;
-
+                return Result.Failure("Falied to update folder");
             }
+            string FolderOldPath = GetFolderPath(workspace.Name, folderUpdated.Name);
+            string FolderNewPath = GetFolderPath(workspace.Name, folderDto.Name);
 
-            return false;
-
+            if (! updatePhysicalFolder(FolderOldPath, FolderNewPath))
+            {
+                return Result.Failure("Falied to update folder");
+            }
+            _mapper.Map(folderDto, folderUpdated);
+            _unitOfWork.FolderRepository.Update(folderUpdated);
+            var result = _unitOfWork.Save() > 0;
+            if (result)
+                return Result.Success();
+            else
+                return Result.Failure("Falied to update folder");
+            
         }
 
-
-
-
-    }
-
-
-    
+    }   
 }

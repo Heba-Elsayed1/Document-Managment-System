@@ -1,6 +1,7 @@
 ﻿using Application.Dto;
 using Application.Extensions;
 using Application.Interface;
+using Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,14 +14,10 @@ namespace WepApi.Controllers
     public class FolderController : BaseController
     {
         private readonly IFolderService _folderService;
-        private readonly IWebHostEnvironment _environment;
-        private readonly IWorkspaceService _workspaceService;
-
-        public FolderController(IFolderService folderService , IWebHostEnvironment environment ,IWorkspaceService workspaceService )
+        
+        public FolderController(IFolderService folderService  )
         {
             _folderService = folderService;
-            _environment = environment;
-            _workspaceService = workspaceService;
         }
 
         [Authorize(Roles ="Admin")]
@@ -29,10 +26,10 @@ namespace WepApi.Controllers
         {
             var folders = await _folderService.GelAllFolders();
 
-            if (folders != null)
-                return Ok(folders);
+            if (folders.IsSuccess)
+                return Ok(folders.Value);
             else
-                return BadRequest("Not Authorized");
+                return BadRequest(folders.ErrorMessage);
         }
 
         
@@ -43,10 +40,10 @@ namespace WepApi.Controllers
             int userId = GetUserId();
             var folders = await _folderService.GetPublicFolders(userId);
 
-            if (folders != null)
-                return Ok(folders);
+            if (folders.IsSuccess)
+                return Ok(folders.Value);
             else
-                return BadRequest();
+                return BadRequest(folders.ErrorMessage);
         }
 
 
@@ -54,13 +51,12 @@ namespace WepApi.Controllers
         public async Task<IActionResult> GetFolderById(int folderId)
         {
             int userId = GetUserId();
-
             var folder = await _folderService.GetFolderById(folderId , userId);
 
-            if (folder != null)
-                return Ok(folder);
+            if (folder.IsSuccess)
+                return Ok(folder.Value);
             else
-                return BadRequest("Folder not found");
+                return BadRequest(folder.ErrorMessage);
         }
 
 
@@ -68,14 +64,14 @@ namespace WepApi.Controllers
         public async Task<IActionResult> GetFoldersByWorkspace(int workspaceId)
         {
             int userId = GetUserId();
-
             var folders = await _folderService.GetFoldersByWorkspace(workspaceId , userId);
 
-            if (folders != null)
-                return Ok(folders);
+            if (folders.IsSuccess)
+                return Ok(folders.Value);
             else
-                return BadRequest("Invalid Workspace");
+                return BadRequest(folders.ErrorMessage);
         }
+
 
         [Authorize(Roles = "User")]
         [HttpPost]
@@ -83,44 +79,26 @@ namespace WepApi.Controllers
         {
 
             int userId = GetUserId();
-
-            var folderDto = new FolderDto
-            {
-                Name = folderName,
-                IsPublic = isPublic
-            };
-
-
-            bool isCreated = false;
-            isCreated = await _folderService.CreateFolder(folderDto, userId);
+            var Created = await _folderService.CreateFolder(folderName, isPublic, userId);
             
-            if (isCreated) 
-            {
-
-                return Ok("Folder is created successfully");
-            }
+            if (Created.IsSuccess) 
+                return Ok();
             else
-                return BadRequest("Failed to create folder");
+                return BadRequest(Created.ErrorMessage);
         }
+
 
         [Authorize(Roles = "User")]
         [HttpPut]
         public async Task<IActionResult> UpdateFolder([FromBody] FolderDto folderDto)
         {
-            if (folderDto != null)
-            {
                 int userId = GetUserId();
+                var updated = await _folderService.UpdateFolder(folderDto, userId);
 
-                bool isUpdated = false;
-                isUpdated = await _folderService.UpdateFolder(folderDto, userId);
-
-                if (isUpdated)
-                    return Ok("Folder is Updated successfully");
-
-            }
-            return NotFound();
-            
-
+                if (updated.IsSuccess)
+                    return Ok();
+                else
+                  return NotFound(updated.ErrorMessage);
         }
 
         [Authorize(Roles = "User")]
@@ -128,17 +106,13 @@ namespace WepApi.Controllers
         public async Task<IActionResult> DeleteFolder(int folderId)
         {
             int userId = GetUserId();
+            var deleted = await _folderService.DeleteFolder(folderId, userId);
 
-            bool isDeleted = await _folderService.DeleteFolder(folderId, userId);
-
-            if (isDeleted)
-                return Ok("Folder is Deleted successfully");
+            if (deleted.IsSuccess)
+                return Ok();
             else
-                return NotFound("Deleted is Failed");
+                return NotFound(deleted.ErrorMessage);
         }
-
-
-
 
     }
 }

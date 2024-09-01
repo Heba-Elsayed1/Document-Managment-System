@@ -1,4 +1,5 @@
-﻿using Application.Dto;
+﻿using Application.Common;
+using Application.Dto;
 using Application.Interface;
 using AutoMapper;
 using Domain.Interface;
@@ -18,152 +19,180 @@ using System.Threading.Tasks;
 
 namespace Application.Service
 {
-    public class UserService : BaseService, IUserService
-    {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IMapper _mapper;
-        private readonly UserManager<User> _userManager;
-        private readonly IConfiguration _configration;
-
-        public UserService(IUnitOfWork unitOfWork , IMapper mapper , UserManager<User> userManager , IConfiguration configration, IWebHostEnvironment environment):base(environment)
+        public class UserService : BaseService, IUserService
         {
-            _unitOfWork = unitOfWork;
-            _mapper = mapper;
-            _userManager = userManager;
-            _configration=configration;
+            private readonly IUnitOfWork _unitOfWork;
+            private readonly IMapper _mapper;
+            private readonly UserManager<User> _userManager;
+            private readonly IConfiguration _configration;
 
-        }
-
-        public async Task<UserDto> GetUserData(int userId)
-        {
-
-            var user = await _unitOfWork.UserRepository.GetById(userId);
-            return _mapper.Map<UserDto>(user);
-
-        }
-
-        public async Task<IEnumerable<UserDto>> GetUsers()
-        {
-            var users = await _unitOfWork.UserRepository.GetAll();
-            return _mapper.Map<List<UserDto>>(users);
-
-        }
-
-        public async Task<(bool isLogin, string message)> lockUser(int userId , int durationInMinutes)
-        {
-            var userIdString = userId.ToString();
-            var user = await _userManager.FindByIdAsync(userIdString);
-            if (user == null)
+            public UserService(IUnitOfWork unitOfWork , IMapper mapper , UserManager<User> userManager , IConfiguration configration, IWebHostEnvironment environment):base(environment)
             {
-                return (false,"User not found.");
+                _unitOfWork = unitOfWork;
+                _mapper = mapper;
+                _userManager = userManager;
+                _configration=configration;
+
             }
 
-            user.LockoutEnabled = true;
-            user.LockoutEnd = DateTime.UtcNow.AddMinutes(durationInMinutes);
-
-            var result = await _userManager.UpdateAsync(user);
-            if (result.Succeeded)
+            public async Task<GenericResult<UserDto>> GetUserData(int userId)
             {
-                return (true, "User account locked successfully.");
-            }
-            else
-                return (false,"");
+                if (userId < 0)
+                    return GenericResult<UserDto>.Failure("Invalid Id");
+            
+                var user = await _unitOfWork.UserRepository.GetById(userId);
+                if (user == null)
+                    return GenericResult<UserDto>.Failure("User not found");
 
-        }
+                var userDto = _mapper.Map<UserDto>(user);
+                return GenericResult<UserDto>.Success(userDto);
 
-        public async Task<(bool isLogin, string message , JwtSecurityToken myToken)> loginUser(LoginDto userDto)
-        {
-            User user = await _userManager.FindByEmailAsync(userDto.Email);
-
-            if (user == null)
-            {
-                return (false,"Invalid Email",null);
             }
 
-            if (await _userManager.IsLockedOutAsync(user))
+            public async Task<GenericResult<IEnumerable<UserDto>>> GetUsers()
             {
-                return (false ,"User account is locked out.",null);
+                var users = await _unitOfWork.UserRepository.GetAll();
+                if (users == null)
+                    return GenericResult<IEnumerable<UserDto>>.Failure("Users not found");
+
+                var usersDto = _mapper.Map<List<UserDto>>(users);
+                return GenericResult<IEnumerable<UserDto>>.Success(usersDto); 
+
             }
 
-            bool isPasswordTrue = await _userManager.CheckPasswordAsync(user, userDto.Password);
-
-            if (!isPasswordTrue)
+            public async Task<Result> lockUser(int userId , int durationInMinutes)
             {
-                await _userManager.AccessFailedAsync(user);
-                return (false, "Invalid password",null);
-            }
+                if (userId < 0)
+                    return Result.Failure("Invalid Id");
 
-
-            await _userManager.ResetAccessFailedCountAsync(user);
-
-            var claims = new List<Claim>
-            {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.FullName)
-             };
-
-            var roles = await _userManager.GetRolesAsync(user);
-            foreach (var role in roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
-
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configration["JWT:SecretKey"]));
-            var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var myToken = new JwtSecurityToken(
-                issuer: _configration["JWT:ValidIssuer"],
-                audience: _configration["JWT:ValidAudience"],
-                claims: claims,
-                expires: DateTime.Now.AddHours(3),
-                signingCredentials: signingCredentials);
-
-            return (true,"", myToken);
-           }
-
-
-            public async Task<(bool isRegister, IdentityResult result)> registerUser(RegistrationDto userDto)
-            {
-                var user = new User
+                var userIdString = userId.ToString();
+                var user = await _userManager.FindByIdAsync(userIdString);
+                if (user == null)
                 {
-                    FullName = userDto.FullName,
-                    UserName = userDto.UserName,
-                    Email = userDto.Email,
-                    NID = userDto.NID,
-                    PhoneNumber = userDto.PhoneNumber,
-                    Gender = userDto.Gender,
-                    Workspace = new Workspace
+                    return Result.Failure("User not found");
+                }
+                user.LockoutEnabled = true;
+                user.LockoutEnd = DateTime.UtcNow.AddMinutes(durationInMinutes);
+
+                var result = await _userManager.UpdateAsync(user);
+                if (result.Succeeded)
+                {
+                    return Result.Success();
+                }
+                else
+                    return Result.Failure("Failed to lock user");
+
+            }
+
+            public async Task<GenericResult<JwtSecurityToken>> loginUser(LoginDto userDto)
+            {
+                User user = await _userManager.FindByEmailAsync(userDto.Email);
+
+                if (user == null)
+                {
+                    return GenericResult<JwtSecurityToken>.Failure("Invalid Email");
+                }
+
+                if (await _userManager.IsLockedOutAsync(user))
+                {
+                    return GenericResult<JwtSecurityToken>.Failure("User account is locked out.");
+                }
+
+                bool isPasswordTrue = await _userManager.CheckPasswordAsync(user, userDto.Password);
+
+                if (!isPasswordTrue)
+                {
+                    await _userManager.AccessFailedAsync(user);
+                    return GenericResult<JwtSecurityToken>.Failure("Invalid password");
+                }
+
+
+                await _userManager.ResetAccessFailedCountAsync(user);
+
+                var claims = new List<Claim>
+                {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.FullName)
+                    };
+
+                var roles = await _userManager.GetRolesAsync(user);
+                foreach (var role in roles)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role));
+                }
+
+                var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configration["JWT:SecretKey"]));
+                var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+                var myToken = new JwtSecurityToken(
+                    issuer: _configration["JWT:ValidIssuer"],
+                    audience: _configration["JWT:ValidAudience"],
+                    claims: claims,
+                    expires: DateTime.Now.AddHours(3),
+                    signingCredentials: signingCredentials);
+
+                return GenericResult<JwtSecurityToken>.Success(myToken);
+                }
+
+
+                public async Task<Result> registerUser(RegistrationDto userDto)
+                {
+                var workspaceExists = await _unitOfWork.WorkspaceRepository.GetWorkspaceByName(userDto.WorkspaceName);
+                if (workspaceExists != null)
+                {
+                    return Result.Failure("A workspace with this name already exists");
+                }
+                var user = new User
                     {
-                        Name = userDto.WorkspaceName,
-                    }
-                };
+                        FullName = userDto.FullName,
+                        UserName = userDto.UserName,
+                        Email = userDto.Email,
+                        NID = userDto.NID,
+                        PhoneNumber = userDto.PhoneNumber,
+                        Gender = userDto.Gender,
+                        Workspace = new Workspace
+                        {
+                            Name = userDto.WorkspaceName,
+                        }
+                    };
 
                 IdentityResult result = await _userManager.CreateAsync(user, userDto.Password);
                 if (!result.Succeeded)
                 {
-                    return (false , result);
+                    var errorMessage = string.Join(", ", result.Errors.Select(e => e.Description));
+                    return Result.Failure(errorMessage);
                 }
                 else
                 {
                     await _userManager.AddToRoleAsync(user, "User");
                     string WorkspacePath = GetWorkspacePath(userDto.WorkspaceName);
                     Directory.CreateDirectory(WorkspacePath);
-                    return (true,null) ;
-
+                    return Result.Success();
                 }
+            }
+
+            public async Task<Result> updateUser(UserDto userDto , int userId)
+            {
+                if(userDto.Id != userId)
+                    return Result.Failure("Not Authorized");
+            
+
+                if (userDto.Id<0)
+                    return Result.Failure("Invalid Id");
+
+                var user = await _unitOfWork.UserRepository.GetById(userDto.Id);
+                if (user == null)
+                    return Result.Failure("user not found");
+
+                _mapper.Map(userDto, user);
+                _unitOfWork.UserRepository.Update(user);
+                var result = _unitOfWork.Save() > 0;
+                if (result)
+                    return Result.Success();
+                else
+                    return Result.Failure("Falied to update user");
+
+            }
         }
-
-        public async Task<bool> updateUser(UserDto userDto)
-        {
-            var user = await _unitOfWork.UserRepository.GetById(userDto.Id);
-            if (user == null)
-                return false;
-
-            _mapper.Map(userDto, user);
-            _unitOfWork.UserRepository.Update(user);
-            return _unitOfWork.Save() > 0;
-
-        }
-    }
 }

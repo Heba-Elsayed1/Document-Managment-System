@@ -29,11 +29,11 @@ namespace WepApi.Controllers
         [FromQuery] DateTime? creationDate = null)
         {
             int userId = GetUserId();
-            var documents = await _documentService.GetDocumentOfWorkspace(userId, workspaceId, name, type, creationDate);
-            if (documents != null)
-                return Ok(documents);
+            var documents = await _documentService.GetDocumentsOfWorkspace(userId, workspaceId, name, type, creationDate);
+            if (documents.IsSuccess)
+                return Ok(documents.Value);
             else
-                return BadRequest("No documents found for the specified data");
+                return BadRequest(documents.ErrorMessage);
         }
 
 
@@ -42,10 +42,10 @@ namespace WepApi.Controllers
         {
             int userId = GetUserId();
             var documents = await _documentService.GetDocumentsByFolder(folderId, userId);
-            if (documents != null)
-                return Ok(documents);
+            if (documents.IsSuccess)
+                return Ok(documents.Value);
             else
-                return BadRequest("No documents found.");
+                return BadRequest(documents.ErrorMessage);
         }
 
 
@@ -54,10 +54,10 @@ namespace WepApi.Controllers
         {
             int userId = GetUserId();
             var documents = await _documentService.GetDocumentMetadata(documentId,userId);
-            if (documents != null)
-                return Ok(documents);
+            if (documents.IsSuccess)
+                return Ok(documents.Value);
             else
-                return BadRequest("No documents found.");
+                return BadRequest(documents.ErrorMessage); ;
 
         }
 
@@ -67,10 +67,10 @@ namespace WepApi.Controllers
         {
             int userId = GetUserId();
             var documentPath = await _documentService.GetDocumentPath(documentId , userId);
-            if (!string.IsNullOrEmpty(documentPath))
-               return Ok(documentPath);
+            if (documentPath.IsSuccess)
+                return Ok(documentPath.Value);
             else
-                return BadRequest("Not Authorized");
+                return BadRequest(documentPath.ErrorMessage);
         }
 
 
@@ -79,11 +79,11 @@ namespace WepApi.Controllers
         public async Task<IActionResult> DeleteDocument([FromRoute] int documentId)
         {
             int userId = GetUserId();
-            var isDeleted = await _documentService.DeleteDocument(documentId,userId);
-            if (isDeleted)
-                return Ok("Document is deleted successfully");
+            var deleted = await _documentService.DeleteDocument(documentId,userId);
+            if (deleted.IsSuccess)
+                return Ok();
             else
-                return BadRequest("Deletion failed");
+                return BadRequest(deleted.ErrorMessage);
         }
 
 
@@ -92,17 +92,11 @@ namespace WepApi.Controllers
         public async Task<IActionResult> UploadDocument([FromForm] DocumentUploadDto document)
         {
             int userId = GetUserId();
-
-            if (document.File == null || document.File.Length == 0)
-            {
-                return BadRequest("File not provided");
-            }
-
-            bool isCreated = await _documentService.CreateDocument(document, userId);
-            if (isCreated)
-                return Ok("Document uploaded successfully");
+            var Created = await _documentService.CreateDocument(document, userId);
+            if (Created.IsSuccess)
+                return Ok();
             else
-                return BadRequest("Failed to upload document");
+                return BadRequest(Created.ErrorMessage);
         }
 
 
@@ -111,14 +105,13 @@ namespace WepApi.Controllers
         public async Task<IActionResult> DownloadDocument(int documentId)
         {
             int userId = GetUserId();
-            var (isDownloaded, message, fileBytes, mimeType, documentName) = await _documentService.DownloadDocument(documentId, userId);
-
-            if (!isDownloaded)
+            var download = await _documentService.DownloadDocument(documentId, userId);
+            if (download.IsSuccess)
             {
-                return NotFound(message);
+                return File(download.Value.fileBytes, download.Value.mimiType, download.Value.documentName);
+                
             }
-               
-             return File(fileBytes, mimeType, documentName);
+            return NotFound(download.ErrorMessage);
         }
 
 
@@ -127,40 +120,12 @@ namespace WepApi.Controllers
         public async Task<IActionResult> UpdateDocument (int documentId ,string documentName)
         {
             int userId = GetUserId();
-            if (string.IsNullOrEmpty(documentName))
-                return BadRequest("Name not Entered");
-            var isUpdated = await _documentService.UpdateDocumentName(documentId, documentName, userId);
-            if (isUpdated)
-                return Ok("Document name updated sucessfully");
+            var updated = await _documentService.UpdateDocumentName(documentId, documentName, userId);
+            if (updated.IsSuccess)
+                return Ok();
             else
-                return BadRequest("Failed to Update Document");
+                return BadRequest(updated.ErrorMessage);
         }
-
-
-        //[HttpPut("Restore/{documentId}")]
-        //public async Task<IActionResult> RestoreDocument([FromRoute] int documentId)
-        //{
-        //    string userId = HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        //    //int userIdInt = int.Parse(userId);
-
-        //    var isDeleted = await _documentService.RestoreDocument(documentId);
-        //    if (isDeleted)
-        //        return Ok("Document is Restored successfully");
-        //    else
-        //        return BadRequest("Restoring failed");
-        //}
-
-        //[HttpGet("SharedDocuments")]
-        //public async Task<IActionResult> GetSharedDocuments()
-        //{
-        //    int userId = GetUserId();
-        //    var documents = await _documentService.GetSharedDocuments(userId);
-        //    if (documents != null)
-        //        return Ok(documents);
-        //    else
-        //        return BadRequest("No shared documents found.");
-
-        //}
 
     }
 }

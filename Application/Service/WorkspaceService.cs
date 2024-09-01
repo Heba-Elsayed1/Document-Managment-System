@@ -1,4 +1,5 @@
-﻿using Application.Dto;
+﻿using Application.Common;
+using Application.Dto;
 using Application.Interface;
 using AutoMapper;
 using Domain.Interface;
@@ -19,51 +20,84 @@ namespace Application.Service
         }
 
 
-        public async Task<IEnumerable<WorkspaceDto>> GetAllWorkspaces()
+        public async Task<GenericResult<IEnumerable<WorkspaceDto>>> GetAllWorkspaces()
         {
             var workspaces = await _unitOfWork.WorkspaceRepository.GetAll();
-            return _mapper.Map<List<WorkspaceDto>>(workspaces);
+            if(workspaces == null)
+            {
+                return GenericResult<IEnumerable < WorkspaceDto >>.Failure("Workspaces not Found");
+            }
+            var workspacesDto = _mapper.Map<List<WorkspaceDto>>(workspaces);
+            return GenericResult<IEnumerable<WorkspaceDto>>.Success(workspacesDto);
         }
 
-        public async Task<WorkspaceDto> GetWorkspaceById(int id ,int userId)
+        public async Task<GenericResult<WorkspaceDto>> GetWorkspaceById(int id ,int userId)
         {
+            if (id < 0)
+                return GenericResult<WorkspaceDto>.Failure("Invalid Id");
+
             var workspace = await _unitOfWork.WorkspaceRepository.GetWorkspaceByIdAndUserId(id, userId);
-            return _mapper.Map<WorkspaceDto>(workspace);
-            
+            if(workspace == null)
+            {
+                return GenericResult<WorkspaceDto>.Failure("Not Authorize to this workspace or workspace not found");
+            }
+            var workspaceDto = _mapper.Map<WorkspaceDto>(workspace);
+            return GenericResult<WorkspaceDto>.Success(workspaceDto);
         }
 
-        public async Task<WorkspaceDto> GetWorkspaceByUser(int userId)
+        public async Task<GenericResult<WorkspaceDto>> GetWorkspaceByUser(int userId)
         {
             var workspace = await _unitOfWork.WorkspaceRepository.GetWorkspaceByUser(userId);
-            return _mapper.Map<WorkspaceDto>(workspace);
-           
+            if(workspace == null)
+            {
+                return GenericResult<WorkspaceDto>.Failure("Not Authorize to this workspace or workspace not found");
+
+            }
+            var workspaceDto = _mapper.Map<WorkspaceDto>(workspace);
+            return GenericResult<WorkspaceDto>.Success(workspaceDto);
+
         }
 
-        public async Task<bool> UpdateWorkspace(WorkspaceDto workspaceDto, int userId)
+        public async Task<Result> UpdateWorkspace(WorkspaceDto workspaceDto, int userId)
         {
+            if (workspaceDto == null)
+            {
+                return Result.Failure("Invalid workspace data.");
+            }
+            if (workspaceDto.Id < 0)
+            {
+                return Result.Failure("Invalid Id");
+            }
+
+            bool workspaceExists = await WorkspaceExists(workspaceDto.Name);
+            if (workspaceExists)
+            {
+                return Result.Failure("Invalid workspace Name.");
+            }
+
             var Updatedworkspace = await _unitOfWork.WorkspaceRepository.GetWorkspaceByIdAndUserId(workspaceDto.Id, userId);
+            
+            if (Updatedworkspace == null)
+            {
+                return Result.Failure("workspace not found");
+            }
+
             string oldPath = GetWorkspacePath(Updatedworkspace.Name);
             string newPath = GetWorkspacePath(workspaceDto.Name);
 
-            if (Updatedworkspace != null)
+            if (!updatePhysicalFolder(oldPath, newPath))
             {
-               
-                if (!updatePhysicalFolder(oldPath, newPath))
-                {
-                    return false;
-                }
-
-                _mapper.Map(workspaceDto, Updatedworkspace);
-                _unitOfWork.WorkspaceRepository.Update(Updatedworkspace);
-                return _unitOfWork.Save() > 0;
-
+                return Result.Failure("Failed to Update physical folder");
             }
+
+            _mapper.Map(workspaceDto, Updatedworkspace);
+            _unitOfWork.WorkspaceRepository.Update(Updatedworkspace);
+            var result = _unitOfWork.Save() > 0;
+            if (result)
+                return Result.Success();
             else
-            {
-                updatePhysicalFolder(newPath, oldPath);
-                return false;
-            }
-                
+                return Result.Failure("Failed to Update logical folder");
+                   
         }
             
 

@@ -20,16 +20,14 @@ namespace WepApi.Controllers
     {
         private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configration;
-        private readonly IWorkspaceService _workspace;
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment _environment;
 
-        public UserController(UserManager<User> userManager, IConfiguration configration, IWorkspaceService workspace, IUserService userService, IMapper mapper, IWebHostEnvironment environment)
+        public UserController(UserManager<User> userManager, IConfiguration configration, IUserService userService, IMapper mapper, IWebHostEnvironment environment)
         {
             _userManager = userManager;
             _configration = configration;
-            _workspace = workspace;
             _userService = userService;
             _mapper = mapper;
             _environment = environment;
@@ -44,21 +42,16 @@ namespace WepApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            var workspaceExists = await _workspace.WorkspaceExists(userDto.WorkspaceName);
-            if (workspaceExists == true)
+            var register = await _userService.registerUser(userDto);
+
+            if (register.IsSuccess)
             {
-                return BadRequest("A workspace with this name already exists");
+                return Ok();
             }
-
-            var (isRegister , result) = await _userService.registerUser(userDto);
-
-            if (isRegister == false)
+            else
             {
-                var errorMessage = string.Join(", ", result.Errors.Select(e => e.Description));
-                return BadRequest(errorMessage);
+                return BadRequest(register.ErrorMessage);
             }
-
-            return Ok("Account is Created Successfully");
         }
 
 
@@ -70,19 +63,19 @@ namespace WepApi.Controllers
         {
             if (!ModelState.IsValid)
                 return Unauthorized();
-            
 
-            var (isLogin, message, mytoken) = await _userService.loginUser(userDto);
-            if (isLogin == false)
-                return BadRequest(message);
-
-            else
+            var login = await _userService.loginUser(userDto);
+            if (login.IsSuccess)
             {
                 return Ok(new
                 {
-                    token = new JwtSecurityTokenHandler().WriteToken(mytoken),
-                    expiration = DateTime.Now.AddHours(1)
+                    token = new JwtSecurityTokenHandler().WriteToken(login.Value),
+                    expiration = DateTime.Now.AddHours(3)
                 });
+            }
+            else
+            {
+               return BadRequest(login.ErrorMessage);
             }
         }
 
@@ -94,10 +87,10 @@ namespace WepApi.Controllers
         {
             var users = await _userService.GetUsers();
 
-            if (users != null)
-                return Ok(users);
+            if (users.IsSuccess)
+                return Ok(users.Value);
             else
-                return BadRequest();
+                return BadRequest(users.ErrorMessage);
 
         }
 
@@ -106,14 +99,14 @@ namespace WepApi.Controllers
         [HttpPost("lockuser/{userId}")]
         public async Task<IActionResult> LockUser(int userId, int durationInMinutes )
         {
-            var (islocked, message) = await _userService.lockUser(userId, durationInMinutes);
+            var locked = await _userService.lockUser(userId, durationInMinutes);
 
-            if (islocked)
+            if (locked.IsSuccess)
             {
-                return Ok("User account locked successfully.");
+                return Ok();
             }
 
-            return BadRequest(message);
+            return BadRequest(locked.ErrorMessage);
         }
 
         [HttpGet("userData")]
@@ -124,7 +117,10 @@ namespace WepApi.Controllers
             if (userIdclaims == userId || (userIdclaims != userId && idAdmin()))
             {
                 var user = await _userService.GetUserData(userId);
-                return Ok(user);
+                if (user.IsSuccess)
+                    return Ok(user.Value);
+                else
+                    return BadRequest(user.ErrorMessage);
             }
             else
                 return BadRequest("Not Authorized");
@@ -135,13 +131,12 @@ namespace WepApi.Controllers
         public async Task<IActionResult> UpdateUser(UserDto userDto)
         {
             int userId = GetUserId();
-            if(userDto.Id == userId)
-            {
-                var user = await _userService.updateUser(userDto);
-                return Ok("user updated successfully");
-            }
+            var user = await _userService.updateUser(userDto, userId);
+
+            if (user.IsSuccess)
+                return Ok();
             else
-                return BadRequest("Not Authorized");
+                return BadRequest(user.ErrorMessage); 
 
         }
 

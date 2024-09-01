@@ -1,4 +1,5 @@
-﻿using Application.Dto;
+﻿using Application.Common;
+using Application.Dto;
 using Domain.Models;
 using Microsoft.AspNetCore.Identity;
 using System;
@@ -12,11 +13,11 @@ namespace Application.Interface
 {
     public interface IUserService
     {
-        Task<IEnumerable<UserDto>> GetUsers();
-        Task<(bool isRegister , IdentityResult result)> registerUser(RegistrationDto userDto);
-        Task<(bool isLogin , string message , JwtSecurityToken myToken)> loginUser(LoginDto userDto);
-        Task<(bool isLogin, string message)> lockUser(int userId , int durationInMinutes);
-        Task<UserDto> GetUserData (int userId);
-        Task<bool> updateUser(UserDto userDto);
+        Task<GenericResult<IEnumerable<UserDto>>> GetUsers();
+        Task<GenericResult<UserDto>> GetUserData(int userId);
+        Task<Result> registerUser(RegistrationDto userDto);
+        Task<GenericResult<JwtSecurityToken>> loginUser(LoginDto userDto);
+        Task<Result> lockUser(int userId , int durationInMinutes);
+        Task<Result> updateUser(UserDto userDto, int userId);
     }
 }

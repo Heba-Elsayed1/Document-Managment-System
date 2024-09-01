@@ -5,15 +5,15 @@ VisualStudioVersion = 17.10.35122.118
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6CC06405-9F42-4A03-A6B0-91A49B120B7B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csproj", "{1C17F79A-39DB-4AE0-924B-A3FDEF7A0D6D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "Domain\Domain.csproj", "{1C17F79A-39DB-4AE0-924B-A3FDEF7A0D6D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Application\Application.csproj", "{EDF75A72-24DA-45C7-85D4-9E014CF7C792}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "Application\Application.csproj", "{EDF75A72-24DA-45C7-85D4-9E014CF7C792}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{2A4DD397-BCED-4C15-B427-DD99031F9C78}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{2A4DD397-BCED-4C15-B427-DD99031F9C78}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Presentation", "Presentation\Presentation.csproj", "{EAE0B152-137A-4866-BEEE-255C0A658C72}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Presentation", "Presentation\Presentation.csproj", "{EAE0B152-137A-4866-BEEE-255C0A658C72}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WepApi", "WepApi\WepApi.csproj", "{5B85FEA5-540C-4910-B5C8-ACC018EB787C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WepApi", "WepApi\WepApi.csproj", "{5B85FEA5-540C-4910-B5C8-ACC018EB787C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

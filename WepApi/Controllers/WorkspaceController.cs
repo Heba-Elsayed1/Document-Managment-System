@@ -27,12 +27,12 @@ namespace WepApi.Controllers
         [ProducesResponseType(400)]
         public async Task<IActionResult> GetWorkspaces()
         {
-            var workspaces = await _workspaceService.GetAllWorkspaces();
+            var result = await _workspaceService.GetAllWorkspaces();
 
-            if (workspaces != null)
-                return Ok(workspaces);
-            else
-                return BadRequest("No workspaces found.");
+            if (result.IsSuccess)
+                return Ok(result.Value);
+
+            return BadRequest(result.ErrorMessage); 
         }
 
         [HttpGet("{workspaceid}")]
@@ -43,11 +43,11 @@ namespace WepApi.Controllers
         {
             int userId = GetUserId();
 
-            var workspace = await _workspaceService.GetWorkspaceById(workspaceid , userId);
-            if (workspace != null)
-                return Ok(workspace);
+            var result = await _workspaceService.GetWorkspaceById(workspaceid , userId);
+            if (result.IsSuccess)
+                return Ok(result.Value);
             else
-                return BadRequest($"You are not authorized to access this workspace.");
+                return BadRequest(result.ErrorMessage);
         }
 
         [Authorize(Roles = "User")]
@@ -59,11 +59,11 @@ namespace WepApi.Controllers
         {
             int userId = GetUserId();
 
-            var workspace = await _workspaceService.GetWorkspaceByUser(userId);
-            if (workspace != null)
-                return Ok(workspace);
+            var result = await _workspaceService.GetWorkspaceByUser(userId);
+            if (result.IsSuccess)
+                return Ok(result.Value);
             else
-                return BadRequest($"You are not authorized to access this workspace.");
+                return BadRequest(result.ErrorMessage);
         }
 
         [Authorize(Roles = "Admin")]
@@ -71,13 +71,12 @@ namespace WepApi.Controllers
         public async Task<IActionResult> GetWorkspacesByUser(int userId)
         {
 
-            var workspace = await _workspaceService.GetWorkspaceByUser(userId);
-            if (workspace != null)
-                return Ok(workspace);
+            var result = await _workspaceService.GetWorkspaceByUser(userId);
+            if (result.IsSuccess)
+                return Ok(result.Value);
             else
-                return BadRequest($"You are not authorized to access this workspace.");
+                return BadRequest(result.ErrorMessage);
         }
-
 
         [Authorize(Roles = "User")]
         [HttpPut]
@@ -86,36 +85,15 @@ namespace WepApi.Controllers
         [ProducesResponseType(404)]
         public async Task<IActionResult> UpdateWorkspace( WorkspaceDto workspaceDto)
         {
-            if (workspaceDto == null)
-            {
-                return BadRequest("Invalid workspace data.");
-            }
-
-            bool workspaceExists = await _workspaceService.WorkspaceExists(workspaceDto.Name);
-            if (workspaceExists)
-            {
-                return BadRequest("Invalid workspace Name.");
-            }
-
             int userId = GetUserId();
 
-            bool isUpdated = await _workspaceService.UpdateWorkspace(workspaceDto, userId);
+            var updated = await _workspaceService.UpdateWorkspace(workspaceDto, userId);
 
-            if (isUpdated)
-                    return Ok("Workspace name is updated succesfully");
+            if (updated.IsSuccess)
+                    return Ok();
             else
-                return NotFound($"Failed to Update Workspace");
-
-
-
-
+                return NotFound(updated.ErrorMessage);
         }
-
-       
-
-
-
-
 
     }
 }
