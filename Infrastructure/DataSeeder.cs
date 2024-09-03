@@ -102,7 +102,6 @@ namespace Infrastructure.Data
                 Document document1 = new Document
                 {
                     Name = "Document1",
-                    Path = "/documents/document1.pdf",
                     Type = "pdf",
                     CreationDate = DateTime.Now,
                     FolderId = folder1.Id
@@ -112,7 +111,6 @@ namespace Infrastructure.Data
                 Document document2 = new Document
                 {
                     Name = "Document2",
-                    Path = "/documents/document2.docx",
                     Type = "docx",
                     CreationDate = DateTime.Now,
                     FolderId = folder2.Id

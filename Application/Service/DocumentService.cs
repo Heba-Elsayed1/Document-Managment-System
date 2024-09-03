@@ -6,6 +6,7 @@ using Domain.Interface;
 using Domain.Models;
 using Microsoft.AspNetCore.Hosting;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection.Metadata;
 using System.Xml.Linq;
 
@@ -62,7 +63,7 @@ namespace Application.Service
             {
                 Name = uniqueName,
                 FolderId = document.FolderId,
-                Path = filePath,
+               // Path = filePath,
                 Type = extension.TrimStart('.'),
                 CreationDate = DateTime.UtcNow
             };
@@ -126,12 +127,22 @@ namespace Application.Service
             if (id < 0)
                 return GenericResult<string>.Failure("Invalid Id");
 
-            var path = await _unitOfWork.DocumentRepository.GetDocumentPath(id, userId);
-            if (path == null)
+            var docuemnt = await _unitOfWork.DocumentRepository.GetDocumentByUser(userId, id);
+            if (docuemnt == null)
+            {
+
                 return GenericResult<string>.Failure("Can't find path");
+            }
+
             else
+            {
+                var folderPath = GetFolderPath(docuemnt.Folder.Workspace.Name, docuemnt.Folder.Name);
+                var path = Path.Combine(folderPath, docuemnt.Name);
                 return GenericResult<string>.Success(path);
+            }
+
         }
+
 
         public async Task<GenericResult<IEnumerable<DocumentDto>>> GetDocumentsByFolder(int FolderId, int userId)
         {
@@ -146,6 +157,7 @@ namespace Application.Service
             var documentDto = _mapper.Map<List<DocumentDto>>(documents);
             return GenericResult<IEnumerable<DocumentDto>>.Success(documentDto);
         }
+
 
         public async Task<GenericResult<(byte[] fileBytes, string mimiType, string documentName)>> DownloadDocument(int id, int userId)
         {
@@ -197,7 +209,7 @@ namespace Application.Service
             var newPath = Path.Combine(folderPath, name);
 
             document.Name = $"{name}.{document.Type}";
-            document.Path = $"{newPath}.{document.Type}";
+            //document.Path = $"{newPath}.{document.Type}";
 
             if (!renameFile(oldPath, newPath,document.Type))
                 return Result.Failure("Falied to update document");

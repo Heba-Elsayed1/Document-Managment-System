@@ -60,7 +60,7 @@ namespace Infrastructure.Repository
            .Include(d => d.Folder)
            .ThenInclude(f => f.Workspace)
            .Where(d => d.Id == documentId
-               && (d.Folder.Workspace.UserId == userId || isAdmin)
+               && (d.Folder.Workspace.UserId == userId || isAdmin || d.Folder.IsPublic == true)
                && d.Folder.IsDeleted == false
                && d.IsDeleted == false
                )
@@ -69,24 +69,7 @@ namespace Infrastructure.Repository
             return document;
         }
 
-        public async Task<string> GetDocumentPath(int id, int userId)
-        {
-            var documentPath = await _context.Documents
-            .Include(d => d.Folder)
-            .ThenInclude(f => f.Workspace)
-            .Where(d => d.Id == id
-                && (d.Folder.Workspace.UserId == userId || d.Folder.IsPublic == true)
-                && d.Folder.IsDeleted == false
-                && d.IsDeleted == false
-                ).Select(d=> d.Path)
-            .FirstOrDefaultAsync();
-
-            return documentPath;
-
-
-        }
-
-        public async Task<Document> GetDocumentToDownload(int id, int userId)
+          public async Task<Document> GetDocumentToDownload(int id, int userId)
         {
             var document = await _context.Documents
             .Include(d => d.Folder)

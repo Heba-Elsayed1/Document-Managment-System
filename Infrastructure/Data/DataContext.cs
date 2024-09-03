@@ -67,11 +67,6 @@ namespace Infrastructure.Data
             .HasMaxLength(255);
 
             modelBuilder.Entity<Document>()
-            .Property(d => d.Path)
-            .IsRequired()
-            .HasMaxLength(255);
-
-            modelBuilder.Entity<Document>()
                 .Property(d => d.Type)
                 .HasMaxLength(50);
 
