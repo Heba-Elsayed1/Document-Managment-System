@@ -109,74 +109,80 @@ namespace Application.Service
 
                 await _userManager.ResetAccessFailedCountAsync(user);
 
-                var claims = new List<Claim>
+                 var (myToken, roles) = await createToken(user);
+
+               return GenericResult<LoginResultDto>.Success(new LoginResultDto
+                {
+                    Token = myToken,
+                    Role = roles.FirstOrDefault()
+                });
+
+                }
+
+           public async Task<(JwtSecurityToken token , IList<string> roles)> createToken(User user)
+            {
+            var claims = new List<Claim>
                 {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Name, user.FullName)
                     };
 
-                var roles = await _userManager.GetRolesAsync(user);
-                foreach (var role in roles)
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, role));
-                }
-
-                var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configration["JWT:SecretKey"]));
-                var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-                var myToken = new JwtSecurityToken(
-                    issuer: _configration["JWT:ValidIssuer"],
-                    audience: _configration["JWT:ValidAudience"],
-                    claims: claims,
-                    expires: DateTime.Now.AddHours(3),
-                    signingCredentials: signingCredentials);
-
-
-            return GenericResult<LoginResultDto>.Success(new LoginResultDto
+            var roles = await _userManager.GetRolesAsync(user);
+            foreach (var role in roles)
             {
-                Token = myToken,
-                Role = roles.FirstOrDefault()
-            });
-
-        }
-
-
-                public async Task<Result> registerUser(RegistrationDto userDto)
-                {
-                var workspaceExists = await _unitOfWork.WorkspaceRepository.GetWorkspaceByName(userDto.WorkspaceName);
-                if (workspaceExists != null)
-                {
-                    return Result.Failure("A workspace with this name already exists");
-                }
-                var user = new User
-                    {
-                        FullName = userDto.FullName,
-                        UserName = userDto.UserName,
-                        Email = userDto.Email,
-                        NID = userDto.NID,
-                        PhoneNumber = userDto.PhoneNumber,
-                        Gender = userDto.Gender,
-                        Workspace = new Workspace
-                        {
-                            Name = userDto.WorkspaceName,
-                        }
-                    };
-
-                IdentityResult result = await _userManager.CreateAsync(user, userDto.Password);
-                if (!result.Succeeded)
-                {
-                    var errorMessage = string.Join(", ", result.Errors.Select(e => e.Description));
-                    return Result.Failure(errorMessage);
-                }
-                else
-                {
-                    await _userManager.AddToRoleAsync(user, "User");
-                    string WorkspacePath = GetWorkspacePath(userDto.WorkspaceName);
-                    Directory.CreateDirectory(WorkspacePath);
-                    return Result.Success();
-                }
+                claims.Add(new Claim(ClaimTypes.Role, role));
             }
+
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configration["JWT:SecretKey"]));
+            var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var myToken = new JwtSecurityToken(
+                issuer: _configration["JWT:ValidIssuer"],
+                audience: _configration["JWT:ValidAudience"],
+                claims: claims,
+                expires: DateTime.Now.AddHours(3),
+                signingCredentials: signingCredentials);
+            
+             return (myToken,roles);
+
+           }
+
+            public async Task<Result> registerUser(RegistrationDto userDto)
+            {
+            var workspaceExists = await _unitOfWork.WorkspaceRepository.GetWorkspaceByName(userDto.WorkspaceName);
+            if (workspaceExists != null)
+            {
+                return Result.Failure("A workspace with this name already exists");
+            }
+            var user = new User
+                {
+                    FullName = userDto.FullName,
+                    UserName = userDto.UserName,
+                    Email = userDto.Email,
+                    NID = userDto.NID,
+                    PhoneNumber = userDto.PhoneNumber,
+                    Gender = userDto.Gender,
+                    Workspace = new Workspace
+                    {
+                        Name = userDto.WorkspaceName,
+                    }
+                };
+
+            IdentityResult result = await _userManager.CreateAsync(user, userDto.Password);
+            if (!result.Succeeded)
+            {
+                var errorMessage = string.Join(", ", result.Errors.Select(e => e.Description));
+                return Result.Failure(errorMessage);
+            }
+            else
+            {
+                await _userManager.AddToRoleAsync(user, "User");
+                string WorkspacePath = GetWorkspacePath(userDto.WorkspaceName);
+                Directory.CreateDirectory(WorkspacePath);
+                return Result.Success();
+            }
+        }
 
             public async Task<Result> updateUser(UserDto userDto , int userId)
             {
