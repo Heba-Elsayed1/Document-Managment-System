@@ -32,17 +32,27 @@ namespace Application.Service
             return FolderPath;
 
         }
-       
 
-        protected bool updatePhysicalFolder (string oldPath , string newPath)
+
+        protected bool UpdatePhysicalFolder(string oldPath, string newPath)
         {
+            // Check if the old path exists
             if (Directory.Exists(oldPath))
             {
-                Directory.Move(oldPath, newPath);
-                return true;
+                if (!Directory.Exists(newPath))
+                {
+                    Directory.Move(oldPath, newPath);
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
             else
+            {
                 return false;
+            }
         }
         protected bool renameFile(string oldFileName, string newFileName, string fileType)
         {

@@ -85,7 +85,7 @@ namespace Application.Service
             string oldPath = GetWorkspacePath(Updatedworkspace.Name);
             string newPath = GetWorkspacePath(workspaceDto.Name);
 
-            if (!updatePhysicalFolder(oldPath, newPath))
+            if (!UpdatePhysicalFolder(oldPath, newPath))
             {
                 return Result.Failure("Failed to Update physical folder");
             }

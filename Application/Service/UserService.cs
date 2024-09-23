@@ -84,18 +84,18 @@ namespace Application.Service
 
             }
 
-            public async Task<GenericResult<JwtSecurityToken>> loginUser(LoginDto userDto)
+            public async Task<GenericResult<LoginResultDto>> loginUser(LoginDto userDto)
             {
                 User user = await _userManager.FindByEmailAsync(userDto.Email);
 
                 if (user == null)
                 {
-                    return GenericResult<JwtSecurityToken>.Failure("Invalid Email");
+                    return GenericResult<LoginResultDto>.Failure("Invalid Email");
                 }
 
                 if (await _userManager.IsLockedOutAsync(user))
                 {
-                    return GenericResult<JwtSecurityToken>.Failure("User account is locked out.");
+                    return GenericResult<LoginResultDto>.Failure("User account is locked out.");
                 }
 
                 bool isPasswordTrue = await _userManager.CheckPasswordAsync(user, userDto.Password);
@@ -103,7 +103,7 @@ namespace Application.Service
                 if (!isPasswordTrue)
                 {
                     await _userManager.AccessFailedAsync(user);
-                    return GenericResult<JwtSecurityToken>.Failure("Invalid password");
+                    return GenericResult<LoginResultDto>.Failure("Invalid password");
                 }
 
 
@@ -132,8 +132,14 @@ namespace Application.Service
                     expires: DateTime.Now.AddHours(3),
                     signingCredentials: signingCredentials);
 
-                return GenericResult<JwtSecurityToken>.Success(myToken);
-                }
+
+            return GenericResult<LoginResultDto>.Success(new LoginResultDto
+            {
+                Token = myToken,
+                Role = roles.FirstOrDefault()
+            });
+
+        }
 
 
                 public async Task<Result> registerUser(RegistrationDto userDto)

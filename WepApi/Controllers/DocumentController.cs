@@ -61,16 +61,21 @@ namespace WepApi.Controllers
 
         }
 
+
         [Authorize(Roles = "User")]
-        [HttpGet ("Preview/{documentId}")]
-        public async Task<IActionResult> GetDocumentPath(int documentId)
+        [HttpGet("Preview/{documentId}")]
+        public async Task<IActionResult> PreviewDocument(int documentId)
         {
             int userId = GetUserId();
-            var documentPath = await _documentService.GetDocumentPath(documentId , userId);
-            if (documentPath.IsSuccess)
-                return Ok(documentPath.Value);
-            else
-                return BadRequest(documentPath.ErrorMessage);
+            var result = await _documentService.DownloadDocument(documentId, userId); 
+
+            if (result.IsSuccess)
+            {
+                var (fileBytes, mimeType, documentName) = result.Value;
+                return File(fileBytes, mimeType, documentName);
+            }
+
+            return BadRequest(result.ErrorMessage);
         }
 
 
@@ -101,7 +106,7 @@ namespace WepApi.Controllers
 
 
         [Authorize(Roles = "User")]
-        [HttpGet("download")]
+        [HttpGet("download/{documentId}")]
         public async Task<IActionResult> DownloadDocument(int documentId)
         {
             int userId = GetUserId();

@@ -72,8 +72,7 @@ namespace Application.Service
             if (id < 0)
                 return Result.Failure("Invalid Id");
 
-            var workspace = await _unitOfWork.WorkspaceRepository.GetWorkspaceByUser(userId);
-            var folder = await _unitOfWork.FolderRepository.GetFolderByWorkspace(workspace.Id);
+            var folder = await _unitOfWork.FolderRepository.GetFolderById(id,userId);
 
             if (folder != null )
                 _unitOfWork.FolderRepository.Delete(folder);
@@ -141,7 +140,7 @@ namespace Application.Service
              return Result.Failure("Invalid Id");
 
             var workspace = await _unitOfWork.WorkspaceRepository.GetWorkspaceByUser(userId);
-            var folderUpdated = await _unitOfWork.FolderRepository.GetFolderByWorkspace(workspace.Id);
+            var folderUpdated = await _unitOfWork.FolderRepository.GetFolderById(folderDto.Id,userId);
 
             if (folderUpdated == null)
             {
@@ -150,7 +149,7 @@ namespace Application.Service
             string FolderOldPath = GetFolderPath(workspace.Name, folderUpdated.Name);
             string FolderNewPath = GetFolderPath(workspace.Name, folderDto.Name);
 
-            if (! updatePhysicalFolder(FolderOldPath, FolderNewPath))
+            if (! UpdatePhysicalFolder(FolderOldPath, FolderNewPath))
             {
                 return Result.Failure("Falied to update folder");
             }

@@ -16,7 +16,7 @@ namespace Application.Interface
         Task<GenericResult<IEnumerable<UserDto>>> GetUsers();
         Task<GenericResult<UserDto>> GetUserData(int userId);
         Task<Result> registerUser(RegistrationDto userDto);
-        Task<GenericResult<JwtSecurityToken>> loginUser(LoginDto userDto);
+        Task<GenericResult<LoginResultDto>> loginUser(LoginDto userDto);
         Task<Result> lockUser(int userId , int durationInMinutes);
         Task<Result> updateUser(UserDto userDto, int userId);
     }

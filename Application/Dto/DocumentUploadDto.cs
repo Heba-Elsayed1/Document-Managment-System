@@ -13,8 +13,6 @@ namespace Application.Dto
     {
         public string? Name;
         public int FolderId { get; set; }
-        //public bool IsPublic { get; set; }
-
         [Required]
         public IFormFile File { get; set; }
     }

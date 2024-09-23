@@ -75,7 +75,7 @@ namespace Infrastructure.Repository
             .Include(d => d.Folder)
             .ThenInclude(f => f.Workspace)
             .Where(d => d.Id == id
-                && (d.Folder.Workspace.UserId == userId || d.Folder.IsPublic == true)
+                && (d.Folder.Workspace.UserId == userId || d.Folder.IsPublic == true || isAdmin)
                 && d.Folder.IsDeleted == false
                 && d.IsDeleted == false
                 )

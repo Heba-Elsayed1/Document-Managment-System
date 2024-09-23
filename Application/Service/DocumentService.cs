@@ -63,7 +63,6 @@ namespace Application.Service
             {
                 Name = uniqueName,
                 FolderId = document.FolderId,
-               // Path = filePath,
                 Type = extension.TrimStart('.'),
                 CreationDate = DateTime.UtcNow
             };

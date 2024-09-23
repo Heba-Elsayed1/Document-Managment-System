@@ -61,6 +61,15 @@ builder.Services.AddDbContext<DataContext>(options =>
 //    .AddEntityFrameworkStores<DataContext>()
 //    .AddDefaultTokenProviders();
 
+// Add CORS policy to allow Angular frontend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular",
+        builder => builder.WithOrigins("http://localhost:4200")  // Use http if your Angular app is running on http
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials());  // Allow credentials for secure cookie or token-based authentication
+});
 
 //user lockout
 builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
@@ -158,6 +167,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowAngular"); // Apply the CORS policy
+
 app.UseAuthentication();
 app.UseAuthorization();
 

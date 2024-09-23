@@ -69,8 +69,9 @@ namespace WepApi.Controllers
             {
                 return Ok(new
                 {
-                    token = new JwtSecurityTokenHandler().WriteToken(login.Value),
-                    expiration = DateTime.Now.AddHours(3)
+                    token = new JwtSecurityTokenHandler().WriteToken(login.Value.Token),
+                    expiration = DateTime.Now.AddHours(3),
+                    role = login.Value.Role 
                 });
             }
             else
@@ -110,20 +111,15 @@ namespace WepApi.Controllers
         }
 
         [HttpGet("userData")]
-        public async Task<IActionResult> GetUserData(int userId)
+        public async Task<IActionResult> GetUserData()
         {
-            int userIdclaims = GetUserId();
+            int userId = GetUserId();
 
-            if (userIdclaims == userId || (userIdclaims != userId && idAdmin()))
-            {
-                var user = await _userService.GetUserData(userId);
-                if (user.IsSuccess)
-                    return Ok(user.Value);
-                else
-                    return BadRequest(user.ErrorMessage);
-            }
+            var user = await _userService.GetUserData(userId);
+            if (user.IsSuccess)
+                return Ok(user.Value);
             else
-                return BadRequest("Not Authorized");
+                return BadRequest(user.ErrorMessage);
 
         }
 
