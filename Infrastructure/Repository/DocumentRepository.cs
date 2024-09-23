@@ -30,8 +30,6 @@ namespace Infrastructure.Repository
                                     && (d.Folder.Workspace.UserId == userId || isAdmin));
             }
 
-
-
             if (!string.IsNullOrEmpty(documentName))
                 query = query.Where(d => d.Name == documentName);
 
@@ -44,9 +42,6 @@ namespace Infrastructure.Repository
             return await query.ToListAsync();
 
         }
-
-
-     
 
         public override void Delete(Document document)
         {
@@ -98,9 +93,3 @@ namespace Infrastructure.Repository
         }
     }
 }
-
-//public void Restore(Document document)
-//{
-//    document.IsDeleted = false;
-//    Update(document);
-//}
