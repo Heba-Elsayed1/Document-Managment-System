@@ -14,9 +14,8 @@ namespace Domain.Interface
         Task<Document> GetDocumentByUser(int userId, int documentId);
         Task<Document> GetDocumentToDownload(int id, int userId);
         Task<IEnumerable<Document>> GetDocumentsByFolder(int FolderId, int userId);
+        Task<Document> GetDocumentByUserAndFolder(int FolderId, int userId);
         void Delete(Document document);
-
-        // void Restore(Document document);
       
 
     }

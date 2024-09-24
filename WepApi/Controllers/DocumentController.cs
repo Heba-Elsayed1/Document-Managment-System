@@ -42,6 +42,21 @@ namespace WepApi.Controllers
         {
             int userId = GetUserId();
             var documents = await _documentService.GetDocumentsByFolder(folderId, userId);
+            
+            if (!documents.IsSuccess)
+            {
+                if (documents.ErrorMessage == "Unauthorized access or invalid folder")
+                    return Unauthorized(documents.ErrorMessage);
+
+                return BadRequest(documents.ErrorMessage);
+            }
+            return Ok(documents.Value);
+        }
+
+        [HttpGet("User")]
+        public async Task<IActionResult> GetDocumentByOfUser(int folderId, int userId)
+        {
+            var documents = await _documentService.GetDocumentsByUser(folderId, userId);
             if (documents.IsSuccess)
                 return Ok(documents.Value);
             else

@@ -142,7 +142,6 @@ namespace Application.Service
 
         }
 
-
         public async Task<GenericResult<IEnumerable<DocumentDto>>> GetDocumentsByFolder(int FolderId, int userId)
         {
             if (FolderId < 0)
@@ -151,8 +150,13 @@ namespace Application.Service
             var documents = await _unitOfWork.DocumentRepository.GetDocumentsByFolder(FolderId, userId);
             if (documents == null)
             {
-                return GenericResult<IEnumerable<DocumentDto>>.Failure("Documents not found");
+                return GenericResult<IEnumerable<DocumentDto>>.Failure("Unauthorized access or invalid folder");
             }
+            if (!documents.Any())
+            {
+                return GenericResult<IEnumerable<DocumentDto>>.Success(Enumerable.Empty<DocumentDto>());
+            }
+
             var documentDto = _mapper.Map<List<DocumentDto>>(documents);
             return GenericResult<IEnumerable<DocumentDto>>.Success(documentDto);
         }
@@ -218,9 +222,22 @@ namespace Application.Service
             if (result)
                 return Result.Success();
             else
-                return Result.Failure("Falied to update document"); 
-
+                return Result.Failure("Falied to update document");
         }
 
+        public async Task<GenericResult<DocumentDto>> GetDocumentsByUser(int FolderId, int userId)
+        {
+            if (FolderId < 0)
+                return GenericResult<DocumentDto>.Failure("Invalid Folder Id");
+
+            var document = await _unitOfWork.DocumentRepository.GetDocumentByUserAndFolder(FolderId, userId);
+            if (document == null)
+            {
+                return GenericResult<DocumentDto>.Failure("Documents not found");
+            }
+
+            var documentDto = _mapper.Map<DocumentDto>(document);
+            return GenericResult<DocumentDto>.Success(documentDto);
+        }
     }
 }

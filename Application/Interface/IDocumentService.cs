@@ -12,6 +12,7 @@ namespace Application.Interface
     {   Task<GenericResult<IEnumerable<DocumentDto>>> GetDocumentsOfWorkspace
             (int userId, int workspaceId, string documentName = null, string documentType = null, DateTime? creationDate = null);
         Task<GenericResult<IEnumerable<DocumentDto>>> GetDocumentsByFolder(int FolderId, int userId);
+        Task<GenericResult<DocumentDto>> GetDocumentsByUser(int FolderId, int userId);
         Task<GenericResult<DocumentDto>> GetDocumentMetadata(int id, int userId);
         Task<Result> CreateDocument(DocumentUploadDto document, int userId);
         Task<Result> DeleteDocument(int id,int userId);

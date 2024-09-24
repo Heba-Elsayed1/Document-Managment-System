@@ -64,7 +64,7 @@ namespace Infrastructure.Repository
             return document;
         }
 
-          public async Task<Document> GetDocumentToDownload(int id, int userId)
+        public async Task<Document> GetDocumentToDownload(int id, int userId)
         {
             var document = await _context.Documents
             .Include(d => d.Folder)
@@ -89,7 +89,35 @@ namespace Infrastructure.Repository
                 && (d.Folder.Workspace.UserId == userId || d.Folder.IsPublic == true || isAdmin)
                 && d.Folder.IsDeleted == false
                 ).ToListAsync();
+
+            if (!documents.Any())
+            {
+                var folder = await _context.Folders
+                    .Include(f => f.Workspace)
+                    .FirstOrDefaultAsync(f => f.Id == FolderId && !f.IsDeleted);
+
+                if (folder == null || (folder.Workspace.UserId != userId && !folder.IsPublic && !isAdmin))
+                {
+                    return null;
+                }
+            }
+
             return documents;
         }
+    
+        public async Task<Document> GetDocumentByUserAndFolder(int FolderId, int userId)
+        {
+            var document = await _context.Documents
+            .Include(d => d.Folder)
+            .ThenInclude(d => d.Workspace)
+            .Where(d => d.IsDeleted == false
+                && (d.FolderId == FolderId)
+                && (d.Folder.Workspace.UserId == userId)
+                && d.Folder.IsDeleted == false
+                ).FirstOrDefaultAsync();
+
+            return document;
+        }
+        
     }
 }
