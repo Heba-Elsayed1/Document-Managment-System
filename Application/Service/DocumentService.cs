@@ -225,19 +225,18 @@ namespace Application.Service
                 return Result.Failure("Falied to update document");
         }
 
-        public async Task<GenericResult<DocumentDto>> GetDocumentsByUser(int FolderId, int userId)
+        public async Task<Result> IsUserDocument(int FolderId, int userId)
         {
             if (FolderId < 0)
-                return GenericResult<DocumentDto>.Failure("Invalid Folder Id");
+                return Result.Failure("");
 
             var document = await _unitOfWork.DocumentRepository.GetDocumentByUserAndFolder(FolderId, userId);
             if (document == null)
             {
-                return GenericResult<DocumentDto>.Failure("Documents not found");
+                return Result.Failure("");
             }
 
-            var documentDto = _mapper.Map<DocumentDto>(document);
-            return GenericResult<DocumentDto>.Success(documentDto);
+            return Result.Success();
         }
     }
 }

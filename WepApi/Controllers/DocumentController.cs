@@ -56,11 +56,9 @@ namespace WepApi.Controllers
         [HttpGet("User")]
         public async Task<IActionResult> GetDocumentByOfUser(int folderId, int userId)
         {
-            var documents = await _documentService.GetDocumentsByUser(folderId, userId);
-            if (documents.IsSuccess)
-                return Ok(documents.Value);
-            else
-                return BadRequest(documents.ErrorMessage);
+            var result = await _documentService.IsUserDocument(folderId, userId);
+
+            return Ok(result.IsSuccess);
         }
 
 
@@ -120,7 +118,6 @@ namespace WepApi.Controllers
         }
 
 
-        [Authorize(Roles = "User")]
         [HttpGet("download/{documentId}")]
         public async Task<IActionResult> DownloadDocument(int documentId)
         {
