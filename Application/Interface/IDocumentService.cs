@@ -11,7 +11,7 @@ namespace Application.Interface
     public interface IDocumentService
     {   Task<GenericResult<IEnumerable<DocumentDto>>> GetDocumentsOfWorkspace
             (int userId, int workspaceId, string documentName = null, string documentType = null, DateTime? creationDate = null);
-        Task<GenericResult<IEnumerable<DocumentDto>>> GetDocumentsByFolder(int FolderId, int userId);
+        Task<GenericResult<IEnumerable<DocumentDto>>> GetDocumentsByFolder(int FolderId, int userId, int pageNumber, int pageSize);
         Task<Result> IsUserDocument(int FolderId, int userId);
         Task<GenericResult<DocumentDto>> GetDocumentMetadata(int id, int userId);
         Task<Result> CreateDocument(DocumentUploadDto document, int userId);

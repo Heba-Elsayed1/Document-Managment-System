@@ -49,13 +49,15 @@ namespace Application.Service
 
             }
 
-            public async Task<GenericResult<IEnumerable<UserDto>>> GetUsers()
+            public async Task<GenericResult<IEnumerable<UserDto>>> GetUsers(int pageNumber , int pageSize )
             {
                 var users = await _unitOfWork.UserRepository.GetAll();
+                var paginatedUsers = users.Skip((pageNumber-1)* pageSize).Take(pageSize).ToList(); 
+
                 if (users == null)
                     return GenericResult<IEnumerable<UserDto>>.Failure("Users not found");
 
-                var usersDto = _mapper.Map<List<UserDto>>(users);
+                var usersDto = _mapper.Map<List<UserDto>>(paginatedUsers);
                 return GenericResult<IEnumerable<UserDto>>.Success(usersDto); 
 
             }

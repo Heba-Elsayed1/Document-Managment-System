@@ -107,7 +107,7 @@ namespace Application.Service
             return GenericResult<FolderDto>.Success(folderDto);
         }
 
-        public async Task<GenericResult<IEnumerable<FolderDto>>> GetFoldersByWorkspace(int workspaceId, int userId)
+        public async Task<GenericResult<IEnumerable<FolderDto>>> GetFoldersByWorkspace(int workspaceId, int userId, int pageNumber, int pageSize)
         {
             if (workspaceId < 0)
                 return GenericResult<IEnumerable<FolderDto>>.Failure("Invalid Id");
@@ -116,18 +116,22 @@ namespace Application.Service
             if (folders == null)
                 return GenericResult<IEnumerable<FolderDto>>.Failure("Folders not found");
 
-            var foldersDto = _mapper.Map<List<FolderDto>>(folders);
+            var paginatedFolders = folders.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            var foldersDto = _mapper.Map<List<FolderDto>>(paginatedFolders);
             return GenericResult<IEnumerable<FolderDto>>.Success(foldersDto);
 
         }
 
-        public async Task<GenericResult<IEnumerable<FolderDto>>> GetPublicFolders(int userId)
+        public async Task<GenericResult<IEnumerable<FolderDto>>> GetPublicFolders(int userId, int pageNumber, int pageSize)
         {
             var folders = await _unitOfWork.FolderRepository.GetPublicFolders(userId);
             if (folders == null)
                 return GenericResult<IEnumerable<FolderDto>>.Failure("Folders not found");
 
-            var foldersDto = _mapper.Map<List<FolderDto>>(folders);
+            var paginatedFolders = folders.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            var foldersDto = _mapper.Map<List<FolderDto>>(paginatedFolders);
             return GenericResult<IEnumerable<FolderDto>>.Success(foldersDto);
         }
 

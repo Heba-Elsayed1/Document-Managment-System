@@ -84,9 +84,9 @@ namespace WepApi.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        public async Task<IActionResult> GetUsers()
+        public async Task<IActionResult> GetUsers(int pageNumber = 1, int pageSize = 10)
         {
-            var users = await _userService.GetUsers();
+            var users = await _userService.GetUsers(pageNumber , pageSize);
 
             if (users.IsSuccess)
                 return Ok(users.Value);

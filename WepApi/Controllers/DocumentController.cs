@@ -38,10 +38,10 @@ namespace WepApi.Controllers
 
 
         [HttpGet("Folder/{folderId}")]
-        public async Task<IActionResult> GetDocumentsByFolder (int folderId)
+        public async Task<IActionResult> GetDocumentsByFolder (int folderId, int pageNumber = 1, int pageSize = 10)
         {
             int userId = GetUserId();
-            var documents = await _documentService.GetDocumentsByFolder(folderId, userId);
+            var documents = await _documentService.GetDocumentsByFolder(folderId, userId, pageNumber, pageSize);
             
             if (!documents.IsSuccess)
             {

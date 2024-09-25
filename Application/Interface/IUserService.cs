@@ -13,7 +13,7 @@ namespace Application.Interface
 {
     public interface IUserService
     {
-        Task<GenericResult<IEnumerable<UserDto>>> GetUsers();
+        Task<GenericResult<IEnumerable<UserDto>>> GetUsers(int pageNumber, int pageSize);
         Task<GenericResult<UserDto>> GetUserData(int userId);
         Task<Result> registerUser(RegistrationDto userDto);
         Task<GenericResult<LoginResultDto>> loginUser(LoginDto userDto);

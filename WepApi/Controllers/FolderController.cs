@@ -34,11 +34,11 @@ namespace WepApi.Controllers
 
         
         [HttpGet("isPublic")]
-        public async Task<IActionResult> GetPublicFolders()
+        public async Task<IActionResult> GetPublicFolders(int pageNumber = 1, int pageSize = 10)
         {
             
             int userId = GetUserId();
-            var folders = await _folderService.GetPublicFolders(userId);
+            var folders = await _folderService.GetPublicFolders(userId, pageNumber, pageSize);
 
             if (folders.IsSuccess)
                 return Ok(folders.Value);
@@ -61,10 +61,10 @@ namespace WepApi.Controllers
 
 
         [HttpGet("workspace/{workspaceId:int}")]
-        public async Task<IActionResult> GetFoldersByWorkspace(int workspaceId)
+        public async Task<IActionResult> GetFoldersByWorkspace(int workspaceId, int pageNumber = 1, int pageSize = 10)
         {
             int userId = GetUserId();
-            var folders = await _folderService.GetFoldersByWorkspace(workspaceId , userId);
+            var folders = await _folderService.GetFoldersByWorkspace(workspaceId , userId , pageNumber, pageSize);
 
             if (folders.IsSuccess)
                 return Ok(folders.Value);

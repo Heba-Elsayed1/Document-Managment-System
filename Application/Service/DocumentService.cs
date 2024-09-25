@@ -142,7 +142,7 @@ namespace Application.Service
 
         }
 
-        public async Task<GenericResult<IEnumerable<DocumentDto>>> GetDocumentsByFolder(int FolderId, int userId)
+        public async Task<GenericResult<IEnumerable<DocumentDto>>> GetDocumentsByFolder(int FolderId, int userId, int pageNumber, int pageSize)
         {
             if (FolderId < 0)
                 return GenericResult<IEnumerable<DocumentDto>>.Failure("Invalid Folder Id");
@@ -157,7 +157,9 @@ namespace Application.Service
                 return GenericResult<IEnumerable<DocumentDto>>.Success(Enumerable.Empty<DocumentDto>());
             }
 
-            var documentDto = _mapper.Map<List<DocumentDto>>(documents);
+            var paginatedDocuments = documents.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+            var documentDto = _mapper.Map<List<DocumentDto>>(paginatedDocuments);
             return GenericResult<IEnumerable<DocumentDto>>.Success(documentDto);
         }
 
